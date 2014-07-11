@@ -1,139 +1,156 @@
-/**
-* plugin_url()로 값을 스크립트에 사용하기위해서
-* naver-syndication-admin.php, wp_localize_script 함수로 전역에서 선언해야 한다.
-* 플러그인 url이 필요없다면 변수 선언해주어야 한다.
-* var badrSyndication = badrSyndication || {};
-*/
+//var badrSyndication = badrSyndication || {};// set in naver-syndication-admin.php, wp_localize_script
 
-badrSyndication.admin = {
-	sButton: 'table.form-table a[href*=admin-ajax]',
-	elLoadingImg: '<img src="' + badrSyndication.plugin_url + 'img/loadingAnimation.gif" width="208" />',
+badrSyndication.dialog = {
+	
+	_htDialogOpt: {
+						'width' : 500,
+						'resizable' : true,              
+						'dialogClass'   : 'wp-dialog',
+						'modal'         : true,
+						'autoOpen'      : false, 
+						'closeOnEscape' : true
+					},
+	_wlDialog: jQuery('<div id="badrSyndication_result" />'),
+	_elLoadingImg: '<p align="center"><img src="' + badrSyndication.plugin_url + 'img/loadingAnimation.gif" width="208" /></p>',
+	_wlValidator: jQuery('<input type="checkbox" name="doValidater" id="doValidator" /><label for="doValidator">xml문서 정합성 검사</label>'),
+	_currentPage: 1,
 		
-  init: function() {
-  	//"동착확인", "상태확인" 버튼에 이벤트 할당	
-		jQuery(this.sButton).each( jQuery.proxy(this.initEvent, this) ); // scope 때문에 proxy함수 사용. argument[index, element]는 전달된다.
-
+  init: function( elButton ) {
+	this._wlButton = jQuery( elButton ).on( 'click', jQuery.proxy(this.setEvent, this) );
   },
   
-  initEvent: function() {
-  	//arguments[0] = index, arguments[1] = element
-  	jQuery(arguments[1]).on( 'click', jQuery.proxy(this.beforeAjax, this) );
+  loadInfo: function( el ) {
+	var content = el.title ? el.title : this._elLoadingImg;
+   	this._wlDialog.html( content );
   },
   
-  beforeAjax: function( event ) {
-		event = event || window.event;
-		event.preventDefault();
-  	var target = event.target.href || event.srcElement.href;
-  	var wlLayer = this.getWlLayer(target);
-  	if( wlLayer.length > 0 ) this.getWlLayer(target).html( this.elLoadingImg );
-  	this.procAjax( target, wlLayer );
+  setAjaxContent: function( result ) {
+  	this._wlDialog.html( result );
   },
   
-  setAjaxContent: function( wlTarget, result ) {
-  	if( wlTarget.length > 0 ) wlTarget.html( result );
-  },
-  
-  jsonParser: function( str ) {
-  	var res = jQuery.parseJSON( str );
-  	var result = res.title + '<br />' + res.body
-  	return result;
+  addAjaxContent: function( result ) {
+	  	this._wlDialog.append( result );
   },
 
-  procAjax: function( _url, wlTarget ) {
-		jQuery.ajax({
-			url : _url,
-			type : "GET",
-			success : jQuery.proxy(this.setAjaxContent, this, wlTarget)
-		});
+  setEvent: function( e ) {
+	e.preventDefault();
+	if( !this.checkInput() ) return;
+	var el = event.target || event.srcElement;
+	this._wlDialog.appendTo("body").dialog( this._htDialogOpt )
+	.on( 'dialogopen' , jQuery.proxy(this.loadInfo, this, el ) )
+	.on( 'dialogclose' , function() { jQuery(this).remove(); } );
+	var procAjax = true;
+  	if( typeof( this[el.target] ) == 'function' ) procAjax = this[el.target]( el ); // a엘리먼트 target속성을 함수명으로 지정
+  	if( procAjax ) this.doAjax( el.href );
+  },
+  
+   //a target 속성
+  configCheck: function( el ) {
+	  var self = this,
+	  opt = {
+			  title : el.text,
+			  buttons : {	
+				  '아니오' : function(){ self._wlDialog.dialog('close');  },
+				  '예' : function() { self.doAjax( el.href ); }
+				}
+	  		};
+	  this.dialogOpen( opt );
+	  return false;
+  },
+
+  //a target 속성
+  sendPages: function( el ) { 
+	  var self = this,
+	  opt = {
+			  title : el.text,
+			  buttons : {	
+				  '아니오' : function(){ self._wlDialog.dialog('close');  },
+				  '예' : function() { self.getPages( el.href ); }
+				}
+	  		};
+	  this.dialogOpen( opt );
+	  return false;
   },
  
-  getWlLayer: function( _url ) {
-  	return jQuery('#' + _url.split('?')[1].split('=')[1] );
-  }
-}
-
-
-badrSyndication.bulkping = {
-	wlButton: {},
-	wlResult: {},
-	sUrl: '',
-	cur: 1,
-	
-		
-  init: function() {
-  	//arguments[0] = index, arguments[1] = element
-  	this.wlResult = jQuery('#adminPingCheck');
-  	this.wlButton = jQuery("#bulk_ping_button").on( 'click', jQuery.proxy(this.beforeAjax, this) );
+  getPages: function( url ) {
+		jQuery.ajax({
+			url : url,
+			type : "GET",
+			success : jQuery.proxy(this.sendPagePing, this, url)
+		});
   },
-  
-  beforeAjax: function( event ) {
-		event = event || window.event;
-		event.preventDefault();
-  	this.sUrl = event.target.href || event.srcElement.href;
-  	this.getPages();
-  },
-  
-  sendPagePing: function( result ) {
+
+  sendPagePing: function( url, result ) {
 		var totalpages = parseInt(JSON.parse(result).pages);
 		if ( totalpages < 1 ) {
-			this.wlResult.text('no pages');
-			this.wlButton.prop("disabled", false);
+			this.setAjaxContent('no pages');
+			this._wlButton.prop("disabled", false);
 			return;
 		}
-		this.sendPostPing( totalpages );
-  },
-  
-  sendPostPing: function( total ) {
-  	console.log(this.cur, total);
-		if (this.cur > total) {
-			this.wlButton.prop("disabled", false);
-			this.wlResult.text('done');
+		this.sendPostPing( totalpages, url );
+},
+
+sendPostPing: function( total, url ) {
+  	console.log(this._currentPage, total);
+		if (this._currentPage > total) {
+			this._wlButton.prop("disabled", false);
+			this.addAjaxContent('done');
 			return;
 		}
 		
-		var self = this, ping_url = this.sUrl + '&ping_url=page-' + this.cur + '.xml';
-		this.wlResult.text('sending ping for ' + ping_url);
+		var self = this, ping_url = url + '&ping_url=page-' + this._currentPage + '.xml';
+		//this.setAjaxContent('sending ping for ' + ping_url);
 		jQuery.getJSON( ping_url, function(result) {
-				self.wlResult.text(result.ping_url + ' : ' + result.message);
+				self.addAjaxContent('<p>' + result.ping_url + ' : ' + result.message + '</p>');
 				if(result.message == 'OK') {
-					self.cur = self.cur + 1;
-					self.sendPostPing(total);
+					self._currentPage += 1;
+					self.sendPostPing(total, url);
 				} else {
-					this.wlResult.text(result.message);
+					this.setAjaxContent(result.message);
 				}
 		});
   },
-  
-  jsonParser: function( str ) {
-  	var res = jQuery.parseJSON( str );
-  	var result = res.title + '<br />' + res.body
-  	return result;
+  dialogOpen: function( opt ){
+	  this._wlDialog.dialog( "option", opt ).dialog( { 
+		  open: jQuery.proxy( this.insertValidator, this )
+	  } ).dialog( 'open' );
   },
-
-  getPages: function() {
+  
+  insertValidator: function() {
+	   jQuery('div.ui-dialog-buttonset').prepend( this._wlValidator );
+  },
+  
+  doAjax: function( link ) {
+	  this._wlDialog.html( this._elLoadingImg );
+	  if( this._wlValidator.prop( 'checked') ) link = link + '&validate=1';
 		jQuery.ajax({
-			url : this.sUrl,
+			url : link,
 			type : "GET",
-			success : jQuery.proxy(this.sendPagePing, this)
+			success : jQuery.proxy(this.setAjaxContent, this)
 		});
   },
  
-  getWlLayer: function( _url ) {
-  	return jQuery('#' + _url.split('?')[1].split('=')[1] );
+  
+  checkInput: function() {
+	  var b = true;
+	  jQuery('input[name*=syndi]').each(function(i,v) {
+		  if(v.value != '') return true;
+		  alert('입력항목 확인후 저장해 주세요.');
+		  v.focus();
+		  b= false;
+	  });
+	  return b;
   }
-}
+};
 
 
-
+ 	
 jQuery( document ).ready(function( $ ){
-	badrSyndication.admin.init();
-	$('table.form-table a.refresh-link').trigger('click');
-	
-	badrSyndication.bulkping.init();
-	
   $('input[name="post_category[]"]').change(function(){
-  	var checked_categories = $('input[name="post_category[]"]:checked').map(function(){ return this.value}).get();
+  	var checked_categories = $('input[name="post_category[]"]:checked').map(function(){ return this.value; }).get();
   	$('#except_category').val(checked_categories.join(','));
- 	});
+  });
+ 	
+  badrSyndication.dialog.init('p.submit a[href*=admin-ajax]'); //ajax button
 
-})
+});

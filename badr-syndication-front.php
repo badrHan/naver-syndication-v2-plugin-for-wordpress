@@ -18,7 +18,7 @@ class badrSyndicationFront extends badrSyndication{
 	function setVars() {
 		if( empty($this->aOptions['key']) ) $this->setErrorMessage( 1 );
 		
-		preg_match('/^(p[ageost]{3})-([0-9]+)?\.xml$/i', $_GET['syndication_feeds'], $matches);
+		preg_match('/^([p||t][ageost]{3})-([0-9]+)?\.xml$/i', $_GET['syndication_feeds'], $matches);
 		
 		if( empty($matches) ) $this->setErrorMessage( 2 );
 		
@@ -26,8 +26,11 @@ class badrSyndicationFront extends badrSyndication{
 			$this->_id = $matches[2];
 		}elseif($matches[1] == 'page'){ //list
 			$this->_page = $matches[2];
-		}else{ //error
-			$this->setErrorMessage( 2 );
+		}else{ //test
+			$result->id = $matches[0];
+			$result->date = $this->setRFC3339(date('Y-m-d H:i:s'));
+			$result->tplFile = $this->setTemplateFile('xml_test');
+			$this->_dispTemplate( $result );
 		}
 	}
 	
@@ -73,10 +76,6 @@ class badrSyndicationFront extends badrSyndication{
 		return stripos($_SERVER['SERVER_PROTOCOL'],'https') === true ? 'https://' : 'http://';
 	}
 	
-	/**
-	* FIXME 삭제로그 확인,
-	* ID로 post_status를 조회하고 delete table를 조회하여 판단.
-	*/
   private function getArticles() {
 		if($this->_id) $arg = 'p='.$this->_id;
 		else
@@ -86,7 +85,7 @@ class badrSyndicationFront extends badrSyndication{
 			'has_password' => false ,
 			'posts_per_page' => $this->_maxentry,
 			'paged' => $this->_page,
-			'category__in' => $this->sCategory,
+			'category__in' => $this->aCategory,
 			'orderby' => 'ID',
 			'order' => 'DESC'
 		);
@@ -96,64 +95,32 @@ class badrSyndicationFront extends badrSyndication{
 		//$result->next_url = $this->getPageNav($total_page,$id,$type); 
 		if($query->have_posts()) {
 		    foreach($query->posts as $oPost) {
-					$oCategory = $this->getUniqCategory($oPost->ID);
-					$val->id = $oPost->guid;
-					$val->title = htmlspecialchars($oPost->post_title);
-					//$val->summary = get_the_excerpt();
-					$val->content = $oPost->post_content;
-		      $val->updated = $this->setRFC3339($oPost->post_modified_gmt);
-		      $val->regdate = $this->setRFC3339($oPost->post_date_gmt);
-		      $val->via_href = site_url().'/?cat='.$oCategory->cat_ID;
-		      $val->via_title = htmlspecialchars(urldecode($oCategory->name));
-		      $val->mobile_href = $oPost->guid;
-		      $val->nick_name = htmlspecialchars(get_the_author_meta( 'display_name', $oPost->post_author));
-		      $val->category_term = $oCategory->cat_ID;
-		      $val->category_label = $val->via_title;
-		      $result->list[] = $val;
-		      unset($val);
-		      wp_reset_postdata();
+		    	if ( $oPost->status != 'publish' ) {
+		    		$val->ref = get_option( 'siteurl' ) .'?p='.$oPost->guid;
+		    		$val->when = $this->setRFC3339($oPost->post_modified_gmt);
+		    		return $val;
+		    	}
+				$oCategory = $this->getUniqCategory($oPost->ID);
+				$val->id = $oPost->guid;
+				$val->title = htmlspecialchars($oPost->post_title);
+				//$val->summary = get_the_excerpt();
+				$val->content = $oPost->post_content;
+		    	$val->updated = $this->setRFC3339($oPost->post_modified_gmt);
+		      	$val->regdate = $this->setRFC3339($oPost->post_date_gmt);
+		      	$val->via_href = get_option( 'siteurl').'/?cat='.$oCategory->cat_ID;
+		      	$val->via_title = htmlspecialchars(urldecode($oCategory->name));
+		      	$val->mobile_href = $oPost->guid;
+		      	$val->nick_name = htmlspecialchars(get_the_author_meta( 'display_name', $oPost->post_author));
+		      	$val->category_term = $oCategory->cat_ID;
+		      	$val->category_label = $val->via_title;
+		      	$result->list[] = $val;
+		      	unset($val);
+		      	wp_reset_postdata();
 		    }
 		}
 		return $result;
   }
-	
-	private function getDeleted($category_id, $type, $id) {
-		ns_log(__METHOD__,1,0);
-		global $wpdb;
-		$sql = "SELECT * FROM ".$wpdb->prefix."syndication_deleted_log where 1=1";
-		if( !is_null($category_id) ) $sql .= " and cat_ID = ".$category_id;
-		if( !is_null($this->_start) ) $sql .= " and post_deleted_gmt >= '".$this->_start."'";
-		if( !is_null($this->_end) ) $sql .= " and post_deleted_gmt <= '".$this->_end."'";
-		$sql .= " order by uid desc";
-		$res = $wpdb->get_results($sql);
-		if($res) {
-			$result->list = array();
-			foreach($res as $oPost) {
-				$val->id = $this->getID('article', $oPost->cat_ID.'-'.$oPost->ID);
-				$val->title = htmlspecialchars($oPost->title);
-				$val->updated = $this->setRFC3339($oPost->post_deleted_gmt);
-				$val->deleted = $this->setRFC3339($oPost->post_deleted_gmt);
-				$val->alternative_href = $oPost->link;
-				$val->channel_id = htmlspecialchars($this->getID('channel', $category_id.'-'.$oPost->ID));
-				$result->list[] = $val;
-				unset($val);
-			}
-		}
-		return $result;
-	}
-
-	private function getPageNav($total_page,$id,$type){
-		$next_url = null;
-    if($this->_page < $total_page) {
-        $next_url = $this->getSelfHref($id, $type);
-        if(!empty($_GET['start-time'])) $next_url .= '&start-time='.str_replace('+','%2b',$_GET['start-time']);
-        if(!empty($_GET['end-time'])) $next_url .= '&end-time='.str_replace('+','%2b',$_GET['end-time']);
-        if(!empty($_GET['max-entry'])) $next_url .= '&max-entry='.$_GET['max-entry'];
-        $next_url .= '&page='.($this->_page + 1);
-    }
-    return $next_url;
-	}
-                
+	             
   function getID() {
       return sprintf('%s/?syndication_feeds=%s', $this->aOptions['site_url'], $this->_page ? 'page-'.$this->_page.'.xml' : 'post-'.$this->_id.'.xml');
   }

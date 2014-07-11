@@ -1,5 +1,3 @@
-<?php echo('<?xml version="1.0" encoding="utf-8"?>')?>
-
 <feed xmlns="http://webmastertool.naver.com">
 	<id><?php echo $result->id?></id>
 	<title><?php echo $result->title?></title>
@@ -29,15 +27,8 @@
 		<category term="<?php echo $article->category_term ?>" label="<?php echo $article->category_label ?>" />
 	</entry>
 	<?php endforeach?>
-<?php elseif(isset($result->deleted) && count($result->deleted->list)):?>
-	<?php foreach($result->deleted->list as $key => $delete):?>
-	<entry>
-		<id><?php echo htmlspecialchars($delete->id)?></id>
-		<title><?php echo htmlspecialchars($delete->title)?></title>
-		<updated><?php echo $delete->updated?></updated>
-		<deleted><?php echo $delete->deleted?></deleted>
-		<link rel="alternative" href="<?php echo urldecode($delete->alternative_href)?>" />
-	</entry>
-	<?php endforeach?>
+<?php endif?>
+<?php if(isset($result->articles->ref) && isset($result->articles->when)):?>
+	<deleted-entry ref="<?php echo $result->articles->ref ?>" when="<?php echo $result->articles->when?>" />
 <?php endif?>
 </feed>

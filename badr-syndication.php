@@ -34,14 +34,12 @@ function badr_syndication_setup() {
 	if( isset( $_GET['syndication_feeds'] ) ){
 		ChromePhp::log(GetAllHeaders());
 		require_once(trailingslashit(dirname(__FILE__)) . "badr-syndication-front.php");
-		$oFront = new badrSyndicationFront();
-		$oFront->init();
+		new badrSyndicationFront();
 	}
 	
 	if( is_admin() ){
 		require_once(trailingslashit(dirname(__FILE__)) . "badr-syndication-admin.php");
-		$oAdmin = new badrSyndicationAdmin();
-		$oAdmin->init();
+		new badrSyndicationAdmin();
 	}
 }
 

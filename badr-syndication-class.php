@@ -9,8 +9,11 @@ abstract class badrSyndication{
 	
 	final function __construct(){
 		$this->aOptions = get_option( '_syndication' );
-		$this->aCategory = array_diff( get_all_category_ids(), explode(',',$this->aOptions['except_category']));
-		$this->sCategory = implode(',',$this->aCategory);
+		if( !empty($this->aOptions['except_category']) ) {
+			$this->aCategory = array_diff( get_all_category_ids(), explode(',',$this->aOptions['except_category']));
+			$this->sCategory = implode(',',$this->aCategory);
+		}
+		$this->init();
 	}
 		
 	function init() {}
