@@ -7,7 +7,7 @@
 	</author>
 	<updated><?php echo $result->updated?></updated>
 	<link rel="site" href="<?php echo $result->link->href ?>" title="<?php echo $result->link->title?>" />
-<?php if(isset($result->articles) && count($result->articles->list)):?>
+<?php if(isset($result->articles->list) && count($result->articles->list)):?>
 	<?php foreach($result->articles->list as $key => $article):?>
 	<?php if(empty($article) && $result) $article = &$result;?>
 	<entry>

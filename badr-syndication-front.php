@@ -95,8 +95,8 @@ class badrSyndicationFront extends badrSyndication{
 		//$result->next_url = $this->getPageNav($total_page,$id,$type); 
 		if($query->have_posts()) {
 		    foreach($query->posts as $oPost) {
-		    	if ( $oPost->status != 'publish' ) {
-		    		$val->ref = get_option( 'siteurl' ) .'?p='.$oPost->guid;
+		    	if ( $oPost->post_status != 'publish' ) {
+		    		$val->ref = $oPost->guid;
 		    		$val->when = $this->setRFC3339($oPost->post_modified_gmt);
 		    		return $val;
 		    	}

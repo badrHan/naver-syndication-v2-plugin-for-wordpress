@@ -254,7 +254,7 @@ class badrSyndicationAdmin extends badrSyndication{
 					'body' => array('ping_url' => $ping_url)
 				);
 		$result = wp_remote_post( $url, $arr );
-		ChromePhp::log($result);
+		ChromePhp::log($ping_url);
 		return $result;
   }
 }
