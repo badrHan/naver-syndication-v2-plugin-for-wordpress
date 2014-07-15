@@ -1,12 +1,8 @@
 <?php
 require_once(trailingslashit(dirname(__FILE__)) . 'badr-syndication-class.php');
 
-define( 'PING_URL' , get_option('siteurl').'/?syndication_feeds=' );
-
 class badrSyndicationAdmin extends badrSyndication{
-	
-	private $mode = 'new';
-	
+
 	function init() {
 		add_action( 'admin_init', array( &$this, 'initAdmin' ) );
 		add_action( 'admin_menu', array( &$this, 'initAdminPage') );	
@@ -16,11 +12,12 @@ class badrSyndicationAdmin extends badrSyndication{
 		add_action( 'ns_update_category', array( &$this, 'setExCategory'), 10, 1 ); //제외카테고리설정반영
 		add_action( 'wp_ajax_adminConfigCheck', array( &$this, 'adminConfigCheck'));
 		add_action( 'wp_ajax_sendPagePing', array( &$this, 'sendPagePing'));
-		add_action( 'save_post', array( &$this, 'procPing'), 10, 2);
+		add_action( 'save_post', array( &$this, 'procSavePing'), 10, 2);
+		add_action( 'trashed_post', array( &$this, 'procTrashPing'), 10, 1);
+		add_action( 'untrashed_post', array( &$this, 'procTrashPing'), 10, 1);
 	}
 	
 	function initAdminPage() {
-		//ns_log(__METHOD__,1,0);
 		$suffix = add_options_page( '네이버 신디케이션', '네이버 신디케이션', 'manage_options', 'badr-syndication', array( &$this , 'dispManagementPage') );
 	 	add_action( 'admin_print_scripts-' . $suffix, array( &$this , 'loadAdminScript') );
 		add_meta_box( 'badr_syndication_metabox', '네이버 신디케이션', array( &$this, 'dispMetabox'),'post','side','default');
@@ -28,7 +25,7 @@ class badrSyndicationAdmin extends badrSyndication{
 	}
 
 	
-	/**
+	/*
 	 * FIXME 제외 카테고리 추가시 발행된 해당 포스트를 삭제 처리 루틴 작성
 	 */
 	function setExCategory( $aExCategory ){
@@ -39,7 +36,7 @@ class badrSyndicationAdmin extends badrSyndication{
 	function _checkValidation( $id ){
 		if( empty($_GET['validate']) ) return true;
 		if( !extension_loaded('DOM') ) die( 'PHP DOM 익스텐션이 필요합니다.' );
-		$response = wp_remote_get( PING_URL.$id);
+		$response = wp_remote_get( get_option('siteurl').'/?syndication_feeds='.$id);
 		$xml= new DOMDocument();
 		$xml->loadXML($response['body']);
 		$xsd_file = trailingslashit(dirname(__FILE__)).'inc/syndi.xsd';
@@ -49,8 +46,8 @@ class badrSyndicationAdmin extends badrSyndication{
 	
 	function adminConfigCheck(){
 		if( empty($this->aOptions['key']) ) die('액세스 토큰을 입력해 주세요');
-		$id = 'test-'.mt_rand(100000, 999999).'.xml'; //tpl디렉토리, 임의의 삭제엔트리
-		if( !$this->_checkValidation( $id ) ) die(PING_URL.$id.' - 문서의 정합성문제가 발생했습니다.'.$response['body']);
+		$id = 'post-0.xml';
+		if( !$this->_checkValidation( $id ) ) die(get_option('siteurl').'/?syndication_feeds='.$id.' - 문서의 정합성문제가 발생했습니다.'.$response['body']);
 		$response = $this->_ping( $id );
 		$oXml = simplexml_load_string($response['body']);
 		if($oXml || is_object($oXml) || $oXml->message) {
@@ -78,12 +75,15 @@ class badrSyndicationAdmin extends badrSyndication{
 			$ping_url = $_GET['ping_url'];
 			$result = $this->_ping($ping_url);
 			$oXml = simplexml_load_string($result['body']);
-			die(json_encode(array( 'ping_url' => PING_URL.$ping_url, 'message' => (string) $oXml->message )));
+			die(json_encode(array( 'ping_url' => get_option('siteurl').'/?syndication_feeds='.$ping_url, 'message' => (string) $oXml->message )));
 		}
 	}
 	
+	function procTrashPing( $post_id ){
+		$this->_ping('post-'.$post_id.'.xml');
+	}
 	
-	function procPing( $post_id, $oPost ){
+	function procSavePing( $post_id, $oPost ){
   		if( !isset($_POST['_syndication_is_off']) || !isset($_POST['_syndication_do_off'])) return;
   		$is_off = (int) $_POST['_syndication_is_off'];
   		$do_off = (int) $_POST['_syndication_do_off'];
@@ -107,10 +107,6 @@ class badrSyndicationAdmin extends badrSyndication{
 		return $oCategory[0]->cat_ID;
 	}
 
-  /**
-  *FIXME add post_type selection
-  *
-  */
 	function _savePostMeta( $post_id, $oPost ) {
 		if ( wp_is_post_revision( $oPost ) ) return false;
 		if ( empty($_POST['_syndication_metabox_flag']) ) return false;
@@ -238,8 +234,7 @@ class badrSyndicationAdmin extends badrSyndication{
 	}
 		
   function _ping($id) {
-	
-		$ping_url = PING_URL.$id;
+		$ping_url = get_option('siteurl').'/?syndication_feeds='.$id;
 		$url = 'https://apis.naver.com/crawl/nsyndi/v2';
 		$arr = array(
 					'method' => 'POST',

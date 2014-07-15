@@ -7,28 +7,32 @@
 	</author>
 	<updated><?php echo $result->updated?></updated>
 	<link rel="site" href="<?php echo $result->link->href ?>" title="<?php echo $result->link->title?>" />
-<?php if(isset($result->articles->list) && count($result->articles->list)):?>
-	<?php foreach($result->articles->list as $key => $article):?>
-	<?php if(empty($article) && $result) $article = &$result;?>
+<?php if(isset($result->entries->entry) && count($result->entries->entry)):?>
+	<?php foreach($result->entries->entry as $key => $entry):?>
+	<?php if($entry->syndication):?>
 	<entry>
-		<id><?php echo $article->id?></id>
-		<title><![CDATA[<?php echo $article->title?>]]></title>
+		<id><?php echo $entry->id?></id>
+		<title><![CDATA[<?php echo $entry->title?>]]></title>
 		<author>
-		    <name><?php echo $article->nick_name ?></name>
+		    <name><?php echo $entry->nick_name ?></name>
 		</author>
-		<updated><?php echo $article->updated ?></updated>
-		<published><?php echo $article->regdate ?></published>
-		<link rel="via" href="<?php echo $article->via_href ?>" title="<?php echo $article->via_title ?>" />
-		<link rel="mobile" href="<?php echo $article->mobile_href ?>" />
-		<content type="html"><![CDATA[<?php echo $article->content ?>]]></content>
-		<?php if(isset($article->summary)):?>
-		<summary type="text"><![CDATA[<?php echo $article->summary ?>]]></summary>
+		<updated><?php echo $entry->updated ?></updated>
+		<published><?php echo $entry->regdate ?></published>
+		<link rel="via" href="<?php echo $entry->via_href ?>" title="<?php echo $entry->via_title ?>" />
+		<link rel="mobile" href="<?php echo $entry->mobile_href ?>" />
+		<content type="html"><![CDATA[<?php echo $entry->content ?>]]></content>
+		<?php if(isset($entry->summary)):?>
+		<summary type="text"><![CDATA[<?php echo $entry->summary ?>]]></summary>
 		<?php endif?>
-		<category term="<?php echo $article->category_term ?>" label="<?php echo $article->category_label ?>" />
+		<category term="<?php echo $entry->category_term ?>" label="<?php echo $entry->category_label ?>" />
 	</entry>
+
+	<?php else:?>
+	<deleted-entry ref="<?php echo $entry->id ?>" when="<?php echo $entry->regdate?>" />
+	<?php endif?>
+
+
 	<?php endforeach?>
 <?php endif?>
-<?php if(isset($result->articles->ref) && isset($result->articles->when)):?>
-	<deleted-entry ref="<?php echo $result->articles->ref ?>" when="<?php echo $result->articles->when?>" />
-<?php endif?>
+
 </feed>

@@ -1,7 +1,7 @@
 <?php
 
 abstract class badrSyndication{
-	
+
 	protected $aOptions = array();
 	protected $aCategory = array();
 	protected $sCategory = null;
