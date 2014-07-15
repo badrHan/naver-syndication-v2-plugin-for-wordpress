@@ -14,14 +14,14 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 포스트가 작성, 수정, 휴지통으로 이동, 휴지통에서 복구 될때 마다 네이버 검색서비스에 해당포스트의 주소를 담은 핑을 발송하며
 핑을 수신한 네이버봇은 해당 주소를 방문하여 포스트의 정보를 수집해 갑니다.
 
+= Features =
 2014년 7월 이전에 공개된 네이버 신디케이션 API는 현재 사용할 수 없으며 새로 공개된 API가 적용되었습니다. 
 
 
 == Installation ==
-
-다운로드 받은 파일의 압축을 풀고, wp-content/plugins 디렉토리 하위에 badr-naver-syndication 디렉토리를 업로드 합니다.
-
-== Frequently Asked Questions ==
+* 다운로드 받은 파일의 압축을 풀고, wp-content/plugins 디렉토리 하위에 badr-naver-syndication 디렉토리를 업로드하고 플러그인을 활성화 합니다.
+* [네이버 웹마스터 도구](http://webmastertool.naver.com/ "Your favorite software")에서 연동키를 발급받습니다.
+* 관리자메뉴의 "설정 > 네이버 신디케이션" 설정페이지에서 발급받은 연동키를 입력하고 저장한 후에 "설정확인" 버튼을 눌러서 "OK"메세지가 나오면 정상적으로 핑을 주고 받는 상태입니다. 
 
 == Screenshots ==
 
