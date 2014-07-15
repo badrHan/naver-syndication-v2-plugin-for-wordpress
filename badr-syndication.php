@@ -1,8 +1,8 @@
 <?php
 /* Plugin name: 네이버 신디케이션 V2
-   Plugin URI: http://syndi.badr.kr
+   Plugin URI:http://note.badr.kr/category/syndication/
    Author: changhoon Han
-   Author URI: http://badr.kr
+   Author URI: http://note.badr.kr
    Version: 0.7
    Description: 네이버 신디케이션 문서란, 웹 사이트의 콘텐츠를 네이버 웹 서비스에 전달할 수 있도록 정해진 형식에 맞춰 작성한 문서입니다
    Max WP Version: 3.9
@@ -28,9 +28,7 @@ function badr_syndication_setup() {
 		return;
 	}
 	
-	/**
-	 * 포스트 ID 나  unixtimestamp 중 하나를  파라미터로 받아들인다.
-	 */
+
 	if( isset( $_GET['syndication_feeds'] ) ){
 		ChromePhp::log(GetAllHeaders());
 		require_once(trailingslashit(dirname(__FILE__)) . "badr-syndication-front.php");
@@ -44,7 +42,7 @@ function badr_syndication_setup() {
 }
 
 function initError() {
-		echo "<div class='error fade'><p><strong>3.5버전 이상이 필요합니다.</strong></p></div>";
+		echo "<div class='error fade'><p><strong>Naver Syndication 플러그인은 WP3.5버전 이상이 필요합니다.</strong></p></div>";
 }
 
 if(defined('ABSPATH') && defined('WPINC')) {
