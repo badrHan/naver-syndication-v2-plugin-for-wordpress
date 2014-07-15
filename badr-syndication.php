@@ -23,7 +23,7 @@
 */
 
 function badr_syndication_setup() {
-	if (version_compare($GLOBALS["wp_version"], "3.3", "<")) {
+	if (version_compare($GLOBALS["wp_version"], "2.6", "<")) {
 		add_action('admin_notices', 'initError');
 		return;
 	}
@@ -42,7 +42,7 @@ function badr_syndication_setup() {
 }
 
 function initError() {
-		echo "<div class='error fade'><p><strong>Naver Syndication 플러그인은 WP3.5버전 이상이 필요합니다.</strong></p></div>";
+		echo "<div class='error fade'><p><strong>Naver Syndication 플러그인은 2.6버전 이상이 필요합니다.</strong></p></div>";
 }
 
 if(defined('ABSPATH') && defined('WPINC')) {
