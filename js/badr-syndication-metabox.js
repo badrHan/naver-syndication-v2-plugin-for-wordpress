@@ -1,24 +1,17 @@
 var badrSyndication = badrSyndication || {};
 
-/**
-	* badrSyndication variables
-	* aCategory : 연동카테고리
-	* aSelectedCategory : 포스트 카테고리
-	*
-	*/
 jQuery( document ).ready(function( $ ){
 	
 	badrSyndication.metabox = {
 		
-		_bIsNewPost: false, //새글
-		_bLastSatusIsOn: false, //현재 연동여부
-		_bCateIsSyndi: true, //체크된 카테고리의 연동여부
-		_bVisiIsSyndi: true, //체크된 visibility 연동여부
-		_bStatusIsSyndi: true, //
+		_bIsNewPost: false,
+		_bLastSatusIsOn: false,
+		_bCateIsSyndi: true,
+		_bVisiIsSyndi: true,
+		_bStatusIsSyndi: true,
 		_wlButtonOn: {},
 		_wlButtonOff: {},
 		_wlStatusSelector: {},
-		_wlCategorySelector: {},
 		_wlCategorySelector: {},
 		_wlMessage: {},
 			
@@ -53,10 +46,10 @@ jQuery( document ).ready(function( $ ){
    	
 	  _statusSelector: function(){
 			this._bStatusIsSyndi = this._wlStatusSelector.find('select').val() != 'publish' ? false : true ;
-			return this.setSyndiButton();
+			this.setSyndiButton();
 	   },
 	   
-		_visibilitySelector: function(){
+	_visibilitySelector: function(){
 			this._bVisiIsSyndi = this._wlVisibilitySelector.find('input:radio:checked').val() != 'public' ? false : true;
 	    this.setSyndiButton();
 	   },
@@ -98,7 +91,7 @@ jQuery( document ).ready(function( $ ){
 	  setButtonAttr: function (b) {
 	  	this._wlButtonOn.prop('disabled', b);
 	  },
-	}
+	};
 
 	badrSyndication.metabox.init( !!parseInt( badrSyndication.bIsNewPost ) );
-})
+});

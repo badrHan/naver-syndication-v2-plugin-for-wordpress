@@ -1,10 +1,10 @@
 <?php
-/* Plugin name: 네이버 신디케이션
-   Plugin URI: http://badr.kr
-   Author: badr Han
+/* Plugin name: 네이버 신디케이션 V2
+   Plugin URI: http://syndi.badr.kr
+   Author: changhoon Han
    Author URI: http://badr.kr
-   Version: 0.5
-   Description: 네이버와 직접 통신을 통해 컨텐츠를 잘 검색되도록 하는 Syndication 규약을 따라 정보를 주고받는 플러그인
+   Version: 0.7
+   Description: 네이버 신디케이션 문서란, 웹 사이트의 콘텐츠를 네이버 웹 서비스에 전달할 수 있도록 정해진 형식에 맞춰 작성한 문서입니다
    Max WP Version: 3.9
 
     This program is free software; you can redistribute it and/or modify

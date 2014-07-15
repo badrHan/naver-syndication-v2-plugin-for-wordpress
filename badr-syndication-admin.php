@@ -9,7 +9,7 @@ class badrSyndicationAdmin extends badrSyndication{
 	}
 	
 	function initAdmin() {
-		add_action( 'ns_update_category', array( &$this, 'setExCategory'), 10, 1 ); //제외카테고리설정반영
+		//add_action( 'ns_update_category', array( &$this, 'setExCategory'), 10, 1 ); //제외카테고리설정반영
 		add_action( 'wp_ajax_adminConfigCheck', array( &$this, 'adminConfigCheck'));
 		add_action( 'wp_ajax_sendPagePing', array( &$this, 'sendPagePing'));
 		add_action( 'save_post', array( &$this, 'procSavePing'), 10, 2);
@@ -68,7 +68,6 @@ class badrSyndicationAdmin extends badrSyndication{
 				'category__in' => $this->aCategory
 			);
 			$query = new WP_Query( $arg );
-			ChromePhp::log($query);
 			$output = array('pages' => $query->max_num_pages);
 			die(json_encode($output));
 		}else{
@@ -93,7 +92,7 @@ class badrSyndicationAdmin extends badrSyndication{
 	  	if ( $is_off && $do_off ) return;
 	  	
 		$this->_ping('post-'.$oPost->ID.'.xml');
-  }
+	}
 
 	function _checkMetaData( $oPost ){
 		if ( defined('DOING_AUTOSAVE') && DOING_AUTOSAVE ) return false;
@@ -139,13 +138,13 @@ class badrSyndicationAdmin extends badrSyndication{
 	    <label for="_syndication_do_off" class="syndication-icon syndication-off">연동안함</label>
 	    <br />
      	<input type="hidden" name="_syndication_metabox_flag" value="1" />
-     	<input type="text" name="_syndication_is_off" id="syndication_status" value="'.$bSyndi.'" />';
+     	<input type="hidden" name="_syndication_is_off" id="syndication_status" value="'.$bSyndi.'" />';
 	}
 
 	function dispManagementPage() {
 		if( isset( $_POST['submit'] ) ) {
 			$aExCategory = empty($_POST['except_category']) ? array() : $_POST['except_category'];
-			do_action( 'ns_update_category ', $aExCategory );
+			//do_action( 'ns_update_category ', $aExCategory );
 			$new_input['except_category'] = $_POST['except_category'];
 			$new_input['key'] = $_POST['syndi_key'];
 			$new_input['email'] = sanitize_email( $_POST['syndi_email'] );
@@ -156,8 +155,8 @@ class badrSyndicationAdmin extends badrSyndication{
 		}		
 ?>
 <div class="wrap">
-	<h2>네이버 신디케이션 설정</h2>
-	<p>신디케이션이란 검색 서비스 업체와 syndication 이라는 표준 규약을 통해서 보다 더 잘 검색되게 하는 기능입니다. 최소한의 요청만으로 효과적으로 컨텐츠를 검색 서비스 업체와 동기화합니다.</p>
+	<h2>네이버 신디케이션 V2</h2>
+	<p>네이버 신디케이션 문서란, 웹 사이트의 콘텐츠를 네이버 웹 서비스에 전달할 수 있도록 정해진 형식에 맞춰 작성한 문서입니다.  네이버 신디케이션 문서는 XML 기반의 문서 포맷인 ATOM을 참고하여 네이버 검색 서비스에 연동할 수 있게 보완한 문서 형식을 사용합니다.</p>
 	<form method="post">
 
 	<table class="form-table">
@@ -166,12 +165,14 @@ class badrSyndicationAdmin extends badrSyndication{
 			<th scope="row">연동키</th>
 				<td>
 					<input type="text" name="syndi_key" class="large-text" value="<?php echo $this->aOptions['key'] ? $this->aOptions['key'] : ''?>" title="연동키" />
+					<p><a href="http://webmastertool.naver.com/index.naver" target="blank">네이버 웹마스터 도구</a>에서 발급받은 연동키를 입력하세요.</p>
 				</td>
 			</tr>
 			<tr>
 			<th scope="row">관리자</th>
 				<td>
 					<input type="text" name="syndi_name" value="<?php echo $this->aOptions['name'] ? $this->aOptions['name'] : ''?>"  />
+					<p>사이트 관리자나 회사명, 저작권자의 이름을 입력하세요.</p>
 				</td>
 			</tr>
 			<tr>
@@ -199,17 +200,6 @@ class badrSyndicationAdmin extends badrSyndication{
 		<a href="<?php echo admin_url('admin-ajax.php')?>?action=sendPagePing" class="button" target="sendPages" title="연동설정된 전체포스트를 페이지단위로 핑을 보냅니다. (100Posts/Page)">문서목록 발송</a>
 	</p>
 	</form>
-	<p>
-	<?php
-	global $wpdb;
-	$aLog = $wpdb->get_results("SELECT * FROM ".$wpdb->prefix."badr_log WHERE log like '%Yeti%' order by id desc");
-	foreach ( $aLog as $log )
-	{
-		echo date('Y-m-d H:i:s', $log->date).'<br />';
-	}
-	
-	?>
-	</p>
 </div>
 <?php
 	}
@@ -249,7 +239,7 @@ class badrSyndicationAdmin extends badrSyndication{
 					'body' => array('ping_url' => $ping_url)
 				);
 		$result = wp_remote_post( $url, $arr );
-		ChromePhp::log($ping_url);
+		if( class_exists('ChromePhp') ) ChromePhp::log($ping_url);
 		return $result;
   }
 }

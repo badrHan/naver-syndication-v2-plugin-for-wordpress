@@ -17,9 +17,4 @@ abstract class badrSyndication{
 	}
 		
 	function init() {}
-	
-	function __clone() { 
-		return new WP_Error( 'broke', __CLASS__ . 'clone is not allowed.' );
-	} 
-
 }

@@ -3,13 +3,13 @@
 badrSyndication.dialog = {
 	
 	_htDialogOpt: {
-						'width' : 500,
-						'resizable' : true,              
-						'dialogClass'   : 'wp-dialog',
-						'modal'         : true,
-						'autoOpen'      : false, 
-						'closeOnEscape' : true
-					},
+		'width' : 500,
+		'resizable' : true,              
+		'dialogClass'   : 'wp-dialog',
+		'modal'         : true,
+		'autoOpen'      : false, 
+		'closeOnEscape' : true
+	},
 	_wlDialog: jQuery('<div id="badrSyndication_result" />'),
 	_elLoadingImg: '<p align="center"><img src="' + badrSyndication.plugin_url + 'img/loadingAnimation.gif" width="208" /></p>',
 	_wlValidator: jQuery('<input type="checkbox" name="doValidater" id="doValidator" /><label for="doValidator">xml문서 정합성 검사</label>'),
@@ -48,7 +48,7 @@ badrSyndication.dialog = {
   configCheck: function( el ) {
 	  var self = this,
 	  opt = {
-			  title : el.text,
+			  title : el.innerText || el.textContent,
 			  buttons : {	
 				  '아니오' : function(){ self._wlDialog.dialog('close');  },
 				  '예' : function() { self.doAjax( el.href ); }
@@ -62,7 +62,7 @@ badrSyndication.dialog = {
   sendPages: function( el ) { 
 	  var self = this,
 	  opt = {
-			  title : el.text,
+			  title : el.innerText || el.textContent,
 			  buttons : {	
 				  '아니오' : function(){ self._wlDialog.dialog('close');  },
 				  '예' : function() { self.getPages( el.href ); }
@@ -88,10 +88,9 @@ badrSyndication.dialog = {
 			return;
 		}
 		this.sendPostPing( totalpages, url );
-},
+  },
 
-sendPostPing: function( total, url ) {
-  	console.log(this._currentPage, total);
+  sendPostPing: function( total, url ) {
 		if (this._currentPage > total) {
 			this._wlButton.prop("disabled", false);
 			this.addAjaxContent('done');
@@ -110,6 +109,7 @@ sendPostPing: function( total, url ) {
 				}
 		});
   },
+  
   dialogOpen: function( opt ){
 	  this._wlDialog.dialog( "option", opt ).dialog( { 
 		  open: jQuery.proxy( this.insertValidator, this )
@@ -144,13 +144,12 @@ sendPostPing: function( total, url ) {
 };
 
 
- 	
 jQuery( document ).ready(function( $ ){
   $('input[name="post_category[]"]').change(function(){
   	var checked_categories = $('input[name="post_category[]"]:checked').map(function(){ return this.value; }).get();
   	$('#except_category').val(checked_categories.join(','));
   });
  	
-  badrSyndication.dialog.init('p.submit a[href*=admin-ajax]'); //ajax button
+  badrSyndication.dialog.init('p.submit a[href*=admin-ajax]');
 
 });
