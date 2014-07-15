@@ -22,6 +22,7 @@
 * 연동키 확인
 * 생성문서의 정합성 확인
 * 네이버봇 응답 확인
+
 ![ScreenShot](http://note.badr.kr/wp-content/uploads/2014/07/config-check.png)
 
 
@@ -29,10 +30,12 @@
 ### 문서목록 발송
 * 기존 포스트의 정합성 확인후 발송
 * 페이지당 100개의 포스트 목록을 발송
+
 ![ScreenShot](http://note.badr.kr/wp-content/uploads/2014/07/send-page-ping.png)
 
 ### 포스트 작성시 발행여부 체크
 * 제외카테고리는 연동체크가 안됨
 * 비밀글이나, pending등의 경우 연동안됨
 * 특정글 연동제외 할 경우 선택
+
 ![ScreenShot](http://note.badr.kr/wp-content/uploads/2014/07/post.png)
