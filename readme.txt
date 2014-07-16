@@ -1,6 +1,7 @@
 === Naver Syndication V2 ===
 Contributors: badrHan
-Donate link: http://badr.kr/
+Donate link: http://badr.kr
+Plugin URI: http://note.badr.kr/syndication
 Tags: syndication, naver, 네이버, 신디케이션
 Requires at least: 2.6
 Tested up to: 3.9.1
