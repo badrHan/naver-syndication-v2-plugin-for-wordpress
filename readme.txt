@@ -1,12 +1,14 @@
-=== 네이버 신디케이션 플러그인 ===
+=== Naver Syndication V2 ===
 Contributors: badrHan
 Donate link: http://badr.kr/
-Tags: syndication, naver
+Tags: syndication, naver, 네이버, 신디케이션
 Requires at least: 2.6
 Tested up to: 3.9.1
 Stable tag: 0.7
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
+
+2014년 7월 새로 공개된 네이버신디케이션 API와 연동하여 워드프레스의 컨텐츠를 네이버 웹 서비스에 전달할 수 있도록 정해진 형식에 맞춰 작성하여 네이버검색로봇에 알리는 플러그인 입니다.
 
 == Description ==
 
