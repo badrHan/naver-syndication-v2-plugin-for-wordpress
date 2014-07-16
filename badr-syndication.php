@@ -30,7 +30,6 @@ function badr_syndication_setup() {
 	
 
 	if( isset( $_GET['syndication_feeds'] ) ){
-		if( class_exists('ChromePhp') ) ChromePhp::log(GetAllHeaders());
 		require_once(trailingslashit(dirname(__FILE__)) . "badr-syndication-front.php");
 		new badrSyndicationFront();
 	}
