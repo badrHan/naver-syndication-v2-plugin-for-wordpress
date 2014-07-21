@@ -12,7 +12,7 @@
 	<?php if($entry->syndication):?>
 	<entry>
 		<id><?php echo $entry->id?></id>
-		<title><![CDATA[<?php echo $entry->title?>]]></title>
+		<title><?php echo $entry->title?></title>
 		<author>
 		    <name><?php echo $entry->nick_name ?></name>
 		</author>
@@ -22,7 +22,7 @@
 		<link rel="mobile" href="<?php echo $entry->mobile_href ?>" />
 		<content type="html"><?php echo $entry->content ?></content>
 		<?php if(isset($entry->summary)):?>
-		<summary type="text"><![CDATA[<?php echo $entry->summary ?>]]></summary>
+		<summary type="text"><?php echo $entry->summary ?></summary>
 		<?php endif?>
 		<category term="<?php echo $entry->category_term ?>" label="<?php echo $entry->category_label ?>" />
 	</entry>
