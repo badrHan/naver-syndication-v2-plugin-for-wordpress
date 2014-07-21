@@ -43,8 +43,11 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
 == Changelog ==
 
+= 0.7.2 =
+* tpl/feeds.php content 노드에 CDATA 태그 제거
+
 = 0.7.1 =
-badr-loger 플러그인이 설치되지 않았을 경우 ChromePhp::log 실행 제거
+* badr-loger 플러그인이 설치되지 않았을 경우 ChromePhp::log 에러 제거
 
 = 0.7 =
 * 기존 문서 목록 발송
