@@ -20,7 +20,7 @@
 		<published><?php echo $entry->regdate ?></published>
 		<link rel="via" href="<?php echo $entry->via_href ?>" title="<?php echo $entry->via_title ?>" />
 		<link rel="mobile" href="<?php echo $entry->mobile_href ?>" />
-		<content type="html"><![CDATA[<?php echo $entry->content ?>]]></content>
+		<content type="html"><?php echo $entry->content ?></content>
 		<?php if(isset($entry->summary)):?>
 		<summary type="text"><![CDATA[<?php echo $entry->summary ?>]]></summary>
 		<?php endif?>
