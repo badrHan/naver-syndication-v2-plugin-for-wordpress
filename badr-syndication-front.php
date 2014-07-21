@@ -91,7 +91,7 @@ class badrSyndicationFront extends badrSyndication{
 			$val->id = $oPost->guid;
 			$val->title = htmlspecialchars($oPost->post_title);
 			//$val->summary = get_the_excerpt();
-			$val->content = $oPost->post_content;
+			$val->content = htmlspecialchars($oPost->post_content);
 	    	$val->updated = $this->setDate($oPost->post_modified_gmt);
 	      	$val->regdate = $this->setDate($oPost->post_date_gmt);
 	      	$val->via_href = get_option( 'siteurl').'/?cat='.$oCategory->cat_ID;
@@ -99,7 +99,7 @@ class badrSyndicationFront extends badrSyndication{
 	      	$val->mobile_href = $oPost->guid;
 	      	$val->nick_name = htmlspecialchars(get_the_author_meta( 'display_name', $oPost->post_author));
 	      	$val->category_term = $oCategory->cat_ID;
-	      	$val->category_label = $val->via_title;
+	      	$val->category_label = htmlspecialchars($val->via_title);
 	      	$result->entry[] = $val;
 	      	unset($val);
 	    }
