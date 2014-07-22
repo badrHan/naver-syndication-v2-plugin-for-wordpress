@@ -88,7 +88,7 @@ class badrSyndicationFront extends badrSyndication{
 	    foreach($query->posts as $oPost) {
 	    	$val->syndication = !get_post_meta( $oPost->ID, '_syndication', true );
 			$oCategory = $this->getUniqCategory($oPost->ID);
-			$val->id = $oPost->guid;
+			$val->id = get_option( 'siteurl').'/?p='.$id.'&syni=1';
 			$val->title = htmlspecialchars($oPost->post_title);
 			//$val->summary = get_the_excerpt();
 			$val->content = htmlspecialchars($oPost->post_content);
@@ -96,7 +96,7 @@ class badrSyndicationFront extends badrSyndication{
 	      	$val->regdate = $this->setDate($oPost->post_date_gmt);
 	      	$val->via_href = get_option( 'siteurl').'/?cat='.$oCategory->cat_ID;
 	      	$val->via_title = htmlspecialchars(urldecode($oCategory->name));
-	      	$val->mobile_href = $oPost->guid;
+	      	$val->mobile_href = $val->id;
 	      	$val->nick_name = htmlspecialchars(get_the_author_meta( 'display_name', $oPost->post_author));
 	      	$val->category_term = $oCategory->cat_ID;
 	      	$val->category_label = htmlspecialchars($val->via_title);
@@ -121,7 +121,7 @@ class badrSyndicationFront extends badrSyndication{
   function getID() {
       return sprintf('%s/?syndication_feeds=%s', get_option( 'siteurl' ), $this->_page ? 'page-'.$this->_page.'.xml' : 'post-'.$this->_id.'.xml');
   }
-
+ 
 	function getUniqCategory( $post_id ) {
 		$aCategory = get_the_category($post_id);
 		foreach($aCategory as $oCategory){
