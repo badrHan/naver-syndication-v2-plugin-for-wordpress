@@ -88,7 +88,7 @@ class badrSyndicationFront extends badrSyndication{
 	    foreach($query->posts as $oPost) {
 	    	$val->syndication = !get_post_meta( $oPost->ID, '_syndication', true );
 			$oCategory = $this->getUniqCategory($oPost->ID);
-			$val->id = get_option( 'siteurl').'/?p='.$id.'&syni=1';
+			$val->id = get_option( 'siteurl').'/?p='.$oPost->ID.'&amp;syni=1';
 			$val->title = htmlspecialchars($oPost->post_title);
 			//$val->summary = get_the_excerpt();
 			$val->content = htmlspecialchars($oPost->post_content);
@@ -140,7 +140,11 @@ class badrSyndicationFront extends badrSyndication{
 		return $this->setDate($wpdb->get_var($query_string));
 	}
 	
-	function setDate($time){
+	/* 
+	 * 0.7.3 getLastUpdatedTime()에서 get_var()이 null을 리턴하는 경우
+	 */
+	function setDate( $time = null ){
+		if( is_null($time) ) $time = date('Y-m-d H:i:s');
 		return mysql2date('Y-m-d\TH:i:s\Z', $time, false);
 	}	
 	
