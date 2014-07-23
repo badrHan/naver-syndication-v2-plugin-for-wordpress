@@ -11,8 +11,10 @@ abstract class badrSyndication{
 		$this->aOptions = get_option( '_syndication' );
 		if( !empty($this->aOptions['except_category']) ) {
 			$this->aCategory = array_diff( get_all_category_ids(), explode(',',$this->aOptions['except_category']));
-			$this->sCategory = implode(',',$this->aCategory);
+		} else {
+			$this->aCategory = get_all_category_ids();
 		}
+		$this->sCategory = implode(',',$this->aCategory);
 		$this->init();
 	}
 		
