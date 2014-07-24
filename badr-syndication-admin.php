@@ -49,11 +49,14 @@ class badrSyndicationAdmin extends badrSyndication{
 		$id = 'post-0.xml';
 		if( !$this->_checkValidation( $id ) ) die(get_option('siteurl').'/?syndication_feeds='.$id.' - 문서의 정합성문제가 발생했습니다.'.$response['body']);
 		$response = $this->_ping( $id );
-		$oXml = simplexml_load_string($response['body']);
-		if($oXml || is_object($oXml) || $oXml->message) {
+		$oXml = @simplexml_load_string( $response['body'] );
+		if( isset($oXml->message) ) {
 			die($oXml->message);
 		}else{
-			echo"<pre>".var_dump($oXml)."</pre>";
+			echo"<p class='error'>Parsing error!!</p>";
+			echo"<pre>";
+			var_dump($response);
+			echo"</pre>";
 			exit;
 		}
 	}
