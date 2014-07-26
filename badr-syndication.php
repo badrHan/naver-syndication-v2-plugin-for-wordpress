@@ -22,12 +22,6 @@
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-function badr_syndication_setup() {
-	if (version_compare($GLOBALS["wp_version"], "2.6", "<")) {
-		add_action('admin_notices', 'initError');
-		return;
-	}
-
 	if( isset( $_GET['syndication_feeds'] ) ){
 		require_once(trailingslashit(dirname(__FILE__)) . "badr-syndication-front.php");
 		new badrSyndicationFront();
@@ -37,12 +31,3 @@ function badr_syndication_setup() {
 		require_once(trailingslashit(dirname(__FILE__)) . "badr-syndication-admin.php");
 		new badrSyndicationAdmin();
 	}
-}
-
-function initError() {
-		echo "<div class='error fade'><p><strong>Naver Syndication 플러그인은 2.6버전 이상이 필요합니다.</strong></p></div>";
-}
-
-if(defined('ABSPATH') && defined('WPINC')) {
-	badr_syndication_setup();
-}
