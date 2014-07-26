@@ -2,7 +2,7 @@
 <?php
 switch($result->message){
 	case 1:
-		$message = '설정에서 액세스 토큰을 입력해 주세요';
+		$message = '설정이 유효하지 않습니다.';
 		break;
 	case 2:
 		$message = '유효한 파라미터가 아닙니다. page-0000.xml, post-0000.xml의 형식이어야 합니다.';
