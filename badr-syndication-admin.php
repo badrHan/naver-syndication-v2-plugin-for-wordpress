@@ -12,6 +12,7 @@ class badrSyndicationAdmin extends badrSyndication{
 		//add_action( 'ns_update_category', array( &$this, 'setExCategory'), 10, 1 ); //제외카테고리설정반영
 		add_action( 'wp_ajax_adminConfigCheck', array( &$this, 'adminConfigCheck'));
 		add_action( 'wp_ajax_sendPagePing', array( &$this, 'sendPagePing'));
+		add_action( 'wp_ajax_sendResetPing', array( &$this, 'sendResetPing'));
 		add_action( 'save_post', array( &$this, 'procSavePing'), 10, 2);
 		add_action( 'trashed_post', array( &$this, 'procTrashPing'), 10, 1);
 		add_action( 'untrashed_post', array( &$this, 'procTrashPing'), 10, 1);
@@ -60,7 +61,24 @@ class badrSyndicationAdmin extends badrSyndication{
 			exit;
 		}
 	}
+
+	function sendResetPing(){
+		if(empty($_GET['ping_url'])){
+			$result = wp_remote_get( 'http://api.badr.kr' );
+			add_option('_syndi_indexed', $result['body'], '', 'no');
+			die($result['body']);
+			//die($result['body']);
+		}else{
+			$ping_url = $_GET['ping_url'];
+			$result = $this->_ping($ping_url);
+			$oXml = simplexml_load_string($result['body']);
+			die(json_encode(array( 'ping_url' => get_option('siteurl').'/?syndication_feeds='.$ping_url, 'message' => (string) $oXml->message )));
+		}
+	}
 	
+	/*
+	 * FIXME 컬럼에 post meta값 추가할것
+	 */ 
 	function sendPagePing(){
 		if(empty($_GET['ping_url'])){
 			$arg = array(
@@ -117,8 +135,13 @@ class badrSyndicationAdmin extends badrSyndication{
 	}
 
 	function updateConfig( $input ){
+		$option_name = '_syndication';
+		if ( get_option( $option_name ) !== false ) {
+			update_option( $option_name, $input );
+		} else {
+			add_option( $option_name, $input, null, 'no' );
+		}
 		$this->aOptions = $input;
-		update_option( '_syndication' , $input );
 	}
 	
 	function loadMetaboxScript( $hook ){
@@ -152,67 +175,87 @@ class badrSyndicationAdmin extends badrSyndication{
 			$new_input['key'] = $_POST['syndi_key'];
 			$new_input['email'] = sanitize_email( $_POST['syndi_email'] );
 			$new_input['name'] = sanitize_text_field( $_POST['syndi_name'] );
-			$new_input['site_url'] = preg_replace( '/^(http|https):\/\//i', '', get_option( 'siteurl' ));;
+			$new_input['site_url'] = preg_replace( '/^(http|https):\/\//i', '', get_option( 'siteurl' ));
 			$new_input['post_type'] = !empty($this->aOptions['post_type']) ? $this->aOptions['post_type'] : array('post');
 			$this->updateConfig( $new_input );
 		}		
 ?>
 <div class="wrap">
 	<h2>네이버 신디케이션 V2</h2>
-	<p>네이버 신디케이션 문서란, 웹 사이트의 콘텐츠를 네이버 웹 서비스에 전달할 수 있도록 정해진 형식에 맞춰 작성한 문서입니다.  네이버 신디케이션 문서는 XML 기반의 문서 포맷인 ATOM을 참고하여 네이버 검색 서비스에 연동할 수 있게 보완한 문서 형식을 사용합니다.</p>
-	<form method="post">
+	<div id="updatemessage" class="updated fade" style="display: none;"><p>설정이 업데이트 되었습니다.</p></div>
+	<div class="postbox-container" style="width:60%;">
+		<div class="metabox-holder">
+			<div class="meta-box-sortables">
+				<div id="gasettings" class="postbox">
+           			<div class="handlediv" title="Click to toggle"><br/></div>
+            		<h3 class="hndle"><span>Google Analytics Settings</span></h3>
+					<div class="inside">
+						<form method="post">
+						<table class="form-table">
+							<tbody>
+								<tr>
+								<th scope="row">연동키</th>
+									<td>
+										<input type="text" name="syndi_key" class="large-text" value="<?php echo $this->aOptions['key'] ? $this->aOptions['key'] : ''?>" title="연동키" />
+										<p><a href="http://webmastertool.naver.com/index.naver" target="blank">네이버 웹마스터 도구</a>에서 발급받은 연동키를 입력하세요.</p>
+									</td>
+								</tr>
+								<tr class="even">
+								<th scope="row">관리자</th>
+									<td>
+										<input type="text" name="syndi_name" value="<?php echo $this->aOptions['name'] ? $this->aOptions['name'] : ''?>"  />
+										<p>사이트 관리자나 회사명, 저작권자의 이름을 입력하세요.</p>
+									</td>
+								</tr>
+								<tr>
+								<th scope="row">관리자 이메일</th>
+									<td>
+										<input type="text" name="syndi_email" value="<?php echo $this->aOptions['email'] ? $this->aOptions['email'] : get_option('admin_email', false)?>" />
+									</td>
+								</tr>
+								<tr>
+								<th scope="row">제외할 카테고리</th>
+									<td>
+								    	<div style="border-color:#CEE1EF; border-style:solid; border-width:2px; height:10em; margin:5px 0px 5px 0px; overflow:auto; padding:0.5em 0.5em; background-color:#fff;">
+								    	<ul>
+								    	<?php wp_category_checklist( 0, 0, explode( ',', $this->aOptions['except_category']) );?>
+								    	</ul>
+								   		</div>
+								   		<input type="hidden" value="<?php echo $this->aOptions['except_category']?>" name="except_category" id="except_category" />
+								   	</td>
+							   	</tr>
+						   	</tbody>
+					   	</table>
 
-	<table class="form-table">
-		<tbody>
-			<tr>
-			<th scope="row">연동키</th>
-				<td>
-					<input type="text" name="syndi_key" class="large-text" value="<?php echo $this->aOptions['key'] ? $this->aOptions['key'] : ''?>" title="연동키" />
-					<p><a href="http://webmastertool.naver.com/index.naver" target="blank">네이버 웹마스터 도구</a>에서 발급받은 연동키를 입력하세요.</p>
-				</td>
-			</tr>
-			<tr>
-			<th scope="row">관리자</th>
-				<td>
-					<input type="text" name="syndi_name" value="<?php echo $this->aOptions['name'] ? $this->aOptions['name'] : ''?>"  />
-					<p>사이트 관리자나 회사명, 저작권자의 이름을 입력하세요.</p>
-				</td>
-			</tr>
-			<tr>
-			<th scope="row">관리자 이메일</th>
-				<td>
-					<input type="text" name="syndi_email" value="<?php echo $this->aOptions['email'] ? $this->aOptions['email'] : get_option('admin_email', false)?>" />
-				</td>
-			</tr>
-			<tr>
-			<th scope="row">제외할 카테고리</th>
-				<td>
-			    	<div style="border-color:#CEE1EF; border-style:solid; border-width:2px; height:10em; margin:5px 0px 5px 0px; overflow:auto; padding:0.5em 0.5em; background-color:#fff;">
-			    	<ul>
-			    	<?php wp_category_checklist( 0, 0, explode( ',', $this->aOptions['except_category']) );?>
-			    	</ul>
-			   		</div>
-			   		<input type="hidden" value="<?php echo $this->aOptions['except_category']?>" name="except_category" id="except_category" />
-			   	</td>
-		   	</tr>
-	   	</tbody>
-   	</table>
-   	<p class="submit">
-		<input type="submit" name="submit" id="submit" class="button button-primary" value="저장">
-		<a href="<?php echo admin_url('admin-ajax.php')?>?action=adminConfigCheck" class="button" target="configCheck" title="임의의 삭제 엔트리를 생성하여 핑을 보냅니다. 진행하시겠습니까?">동작확인</a>
-		<a href="<?php echo admin_url('admin-ajax.php')?>?action=sendPagePing" class="button" target="sendPages" title="연동설정된 전체포스트를 페이지단위로 핑을 보냅니다. (100Posts/Page)">문서목록 발송</a>
-	</p>
-	</form>
-</div>
+						
+						<div class="alignright"><input type="submit" class="button-primary" name="submit" value="설정 저장"></div>
+						</form>
+						<br class="clear" />
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		<p class="submit">
+			<input type="submit" name="submit" id="submit" class="button button-primary" value="저장">
+			<a href="<?php echo admin_url('admin-ajax.php')?>?action=adminConfigCheck" class="button" target="configCheck" title="임의의 삭제 엔트리를 생성하여 핑을 보냅니다. 진행하시겠습니까?">동작확인</a>
+			<a href="<?php echo admin_url('admin-ajax.php')?>?action=sendPagePing" class="button" target="sendPages" title="연동설정된 전체포스트를 페이지단위로 핑을 보냅니다. (100Posts/Page)">문서목록 발송</a>
+			<a href="<?php echo admin_url('admin-ajax.php')?>?action=sendResetPing" class="button" target="sendReset" title="현재 네이버에 색인된 전체 목록에 대한 삭제 핑을 보냅니다 . (100Posts/Page)">색인리셋</a>
+		</p>
+	</div>
+</div>		
 <?php
 	}
 	
 	function loadAdminScript(){
+		if ( !isset( $_GET['page'] ) || $_GET['page'] != 'badr-syndication' ) return;
 	 	wp_register_script('badrSyndicationAdminJs', plugins_url( 'js/badr-syndication-admin.js', __FILE__ ), array("jquery","jquery-ui-dialog"));
 		wp_register_style( 'badrSyndicationStylesheet', plugins_url('css/style.css', __FILE__) );
-		wp_enqueue_script("badrSyndicationAdminJs");
-		wp_enqueue_style("wp-jquery-ui-dialog");
-		wp_enqueue_style("badrSyndicationStylesheet");
+		wp_enqueue_script('badrSyndicationAdminJs');
+		wp_enqueue_style('badrSyndicationStylesheet');
+		wp_enqueue_style('wp-jquery-ui-dialog');
+		wp_enqueue_script( 'postbox' );
+		wp_enqueue_script( 'dashboard' );
 		//js에서 사용할 플러그인 디렉토리 변수를 naverSyndication.plugin_url에 담는다.
    		wp_localize_script( 'badrSyndicationAdminJs', 'badrSyndication', array( 'plugin_url' => plugin_dir_url( __FILE__ ) ) );
 	}
