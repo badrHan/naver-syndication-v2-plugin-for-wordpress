@@ -1,14 +1,14 @@
 <feed xmlns="http://webmastertool.naver.com">
-	<id><?php echo $result->id?></id>
-	<title><?php echo $result->title?></title>
+	<id><?php echo $this->id?></id>
+	<title><?php echo $this->title?></title>
 	<author>
-		<name><?php echo $result->author->name?></name>
-		<email><?php echo $result->author->email?></email>
+		<name><?php echo $this->author->name?></name>
+		<email><?php echo $this->author->email?></email>
 	</author>
-	<updated><?php echo $result->updated?></updated>
-	<link rel="site" href="<?php echo $result->link->href ?>" title="<?php echo $result->link->title?>" />
-<?php if(isset($result->entries->entry) && count($result->entries->entry)):?>
-	<?php foreach($result->entries->entry as $key => $entry):?>
+	<updated><?php echo $this->updated?></updated>
+	<link rel="site" href="<?php echo $this->link->href ?>" title="<?php echo $this->link->title?>" />
+<?php if(isset($this->entries) && count($this->entries)):?>
+	<?php foreach($this->entries as $key => $entry):?>
 	<?php if($entry->syndication):?>
 	<entry>
 		<id><?php echo $entry->id?></id>

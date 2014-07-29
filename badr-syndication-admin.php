@@ -2,7 +2,9 @@
 require_once(trailingslashit(dirname(__FILE__)) . 'badr-syndication-class.php');
 
 class badrSyndicationAdmin extends badrSyndication{
-
+	
+	var $plugin_name = 'badr-syndication';
+	
 	function init() {
 		add_action( 'admin_init', array( &$this, 'initAdmin' ) );
 		add_action( 'admin_menu', array( &$this, 'initAdminPage') );	
@@ -10,16 +12,16 @@ class badrSyndicationAdmin extends badrSyndication{
 	
 	function initAdmin() {
 		//add_action( 'ns_update_category', array( &$this, 'setExCategory'), 10, 1 ); //제외카테고리설정반영
-		add_action( 'wp_ajax_adminConfigCheck', array( &$this, 'adminConfigCheck'));
+		add_action( 'wp_ajax_configCheck', array( &$this, 'adminConfigCheck'));
 		add_action( 'wp_ajax_sendPagePing', array( &$this, 'sendPagePing'));
-		add_action( 'wp_ajax_sendResetPing', array( &$this, 'sendResetPing'));
+		add_action( 'wp_ajax_getIndexed', array( &$this, 'getIndexed'));
 		add_action( 'save_post', array( &$this, 'procSavePing'), 10, 2);
 		add_action( 'trashed_post', array( &$this, 'procTrashPing'), 10, 1);
 		add_action( 'untrashed_post', array( &$this, 'procTrashPing'), 10, 1);
 	}
 	
 	function initAdminPage() {
-		$suffix = add_options_page( '네이버 신디케이션', '네이버 신디케이션', 'manage_options', 'badr-syndication', array( &$this , 'dispManagementPage') );
+		$suffix = add_options_page( '네이버 신디케이션', '네이버 신디케이션', 'manage_options', $this->plugin_name, array( &$this , 'dispManagementPage') );
 	 	add_action( 'admin_print_scripts-' . $suffix, array( &$this , 'loadAdminScript') );
 		add_meta_box( 'badr_syndication_metabox', '네이버 신디케이션', array( &$this, 'dispMetabox'),'post','side','default');
 	 	add_action( 'admin_enqueue_scripts', array( &$this , 'loadMetaboxScript'));
@@ -30,13 +32,13 @@ class badrSyndicationAdmin extends badrSyndication{
 	 * FIXME 제외 카테고리 추가시 발행된 해당 포스트를 삭제 처리 루틴 작성
 	 */
 	function setExCategory( $aExCategory ){
-			$aCheckForPing = array_diff( $aExCategory , $this->aCategory );
+			$aCheckForPing = array_diff( $aExCategory , $this->_aCategory );
 			//if( count($aCheckForPing) > 0 ) $this->procPingCategory();
 	}
 
-	function _checkValidation( $id ){
+	function checkValidation( $id ){
 		if( empty($_GET['validate']) ) return true;
-		if( !extension_loaded('DOM') ) die( 'PHP DOM 익스텐션이 필요합니다.' );
+		if( !extension_loaded('DOM') ) die( '996' );
 		$response = wp_remote_get( get_option('siteurl').'/?syndication_feeds='.$id);
 		$xml= new DOMDocument();
 		$xml->loadXML($response['body']);
@@ -46,61 +48,65 @@ class badrSyndicationAdmin extends badrSyndication{
 	}	
 	
 	function adminConfigCheck(){
-		if( empty($this->aOptions['key']) ) die('액세스 토큰을 입력해 주세요');
-		$id = 'post-0.xml';
-		if( !$this->_checkValidation( $id ) ) die(get_option('siteurl').'/?syndication_feeds='.$id.' - 문서의 정합성문제가 발생했습니다.'.$response['body']);
-		$response = $this->_ping( $id );
-		$oXml = @simplexml_load_string( $response['body'] );
-		if( isset($oXml->message) ) {
-			die($oXml->message);
-		}else{
-			echo"<p class='error'>Parsing error!!</p>";
-			echo"<pre>";
-			var_dump($response);
-			echo"</pre>";
-			exit;
-		}
-	}
-
-	function sendResetPing(){
-		if(empty($_GET['ping_url'])){
-			$result = wp_remote_get( 'http://api.badr.kr' );
-			add_option('_syndi_indexed', $result['body'], '', 'no');
-			die($result['body']);
-			//die($result['body']);
-		}else{
-			$ping_url = $_GET['ping_url'];
-			$result = $this->_ping($ping_url);
-			$oXml = simplexml_load_string($result['body']);
-			die(json_encode(array( 'ping_url' => get_option('siteurl').'/?syndication_feeds='.$ping_url, 'message' => (string) $oXml->message )));
-		}
+		if( empty($this->_aOptions['key']) ) die('999');
+		$id = 'page-1.xml';
+		if( !$this->checkValidation( $id ) ) die('998');
+		$response = $this->ping( $id );
+		$this->pingResponse($response['body']);
 	}
 	
+	function pingResponse( $response ) {
+		$oXml = @simplexml_load_string( $response );
+		if( isset($oXml->message) ) {
+			die($oXml->error_code);
+		}else{
+			die('997');
+		}
+	}
+	/**
+	 * badr.kr api서버로 부터 사이트 url 등록된 색인 목록을 받아온다. 
+	 * @since 0.8
+	 */
+	function getIndexed(){
+		if(isset($_GET['page'])) return $this->sendResetPing($_GET['page']);
+		$url = 'http://api.badr.kr' . (isset($_GET['start']) ? '/?start='.$_GET['start'] : '');
+		ChromePhp::log($url);
+		$result = wp_remote_get( $url );
+		$data = json_decode($result['body']);
+		$this->_procDB('emptyIndexedLog');
+		$this->_procDB('indexedLog',$data->links);
+		die( (string)$data->total );
+	}
+	
+	function sendResetPing( $page ){
+		$response = $this->ping( 'list-'.$page.'.xml' );
+		$this->pingResponse($response['body']);
+	}
 	/*
 	 * FIXME 컬럼에 post meta값 추가할것
 	 */ 
 	function sendPagePing(){
 		if(empty($_GET['ping_url'])){
 			$arg = array(
-				'post_type' => $this->aOptions['post_type'],
+				'post_type' => $this->_aOptions['post_type'],
 				'post_status' => 'publish',
 				'has_password' => false ,
 				'posts_per_page' => 100,
-				'category__in' => $this->aCategory
+				'category__in' => $this->_aCategory
 			);
 			$query = new WP_Query( $arg );
 			$output = array('pages' => $query->max_num_pages);
 			die(json_encode($output));
 		}else{
 			$ping_url = $_GET['ping_url'];
-			$result = $this->_ping($ping_url);
+			$result = $this->ping($ping_url);
 			$oXml = simplexml_load_string($result['body']);
 			die(json_encode(array( 'ping_url' => get_option('siteurl').'/?syndication_feeds='.$ping_url, 'message' => (string) $oXml->message )));
 		}
 	}
 	
 	function procTrashPing( $post_id ){
-		$this->_ping('post-'.$post_id.'.xml');
+		$this->ping('post-'.$post_id.'.xml');
 	}
 	
 	function procSavePing( $post_id, $oPost ){
@@ -112,15 +118,15 @@ class badrSyndicationAdmin extends badrSyndication{
 	  	if ( !$this->_savePostMeta( $post_id, $oPost ) ) return;
 	  	if ( $is_off && $do_off ) return;
 	  	
-		$this->_ping('post-'.$oPost->ID.'.xml');
+		$this->ping('post-'.$oPost->ID.'.xml');
 	}
 
 	function _checkMetaData( $oPost ){
 		if ( defined('DOING_AUTOSAVE') && DOING_AUTOSAVE ) return false;
-		if ( !in_array( $oPost->post_type, $this->aOptions['post_type']) ) return false;
+		if ( !in_array( $oPost->post_type, $this->_aOptions['post_type']) ) return false;
 
 		$oCategory = get_the_category($oPost->ID);
-		if ( !in_array( $oCategory[0]->cat_ID, $this->aCategory ) ) {
+		if ( !in_array( $oCategory[0]->cat_ID, $this->_aCategory ) ) {
 			$this->_savePostMeta( $oPost->ID, $oPost );
 			return false;			
 		}
@@ -137,11 +143,12 @@ class badrSyndicationAdmin extends badrSyndication{
 	function updateConfig( $input ){
 		$option_name = '_syndication';
 		if ( get_option( $option_name ) !== false ) {
-			update_option( $option_name, $input );
+			$bResult = update_option( $option_name, $input );
 		} else {
-			add_option( $option_name, $input, null, 'no' );
+			$bResult = add_option( $option_name, $input, null, 'no' );
 		}
-		$this->aOptions = $input;
+		$this->_aOptions = $input;
+		return $bResult;
 	}
 	
 	function loadMetaboxScript( $hook ){
@@ -151,7 +158,7 @@ class badrSyndicationAdmin extends badrSyndication{
 		wp_enqueue_script( 'badr-syndication-script');
 		wp_register_style( 'badr-syndication-style', plugins_url( 'css/badr-syndication-metabox.css', __FILE__ ) );
 		wp_enqueue_style( 'badr-syndication-style');
-		wp_localize_script( 'badr-syndication-script', 'badrSyndication', array( 'sCategory' => $this->sCategory, 'bIsNewPost' => $bIsNewPost ) );
+		wp_localize_script( 'badr-syndication-script', 'badrSyndication', array( 'sCategory' => $this->_sCategory, 'bIsNewPost' => $bIsNewPost ) );
 	}
 
 	function dispMetabox($oPost,$box) {
@@ -168,7 +175,9 @@ class badrSyndicationAdmin extends badrSyndication{
 	}
 
 	function dispManagementPage() {
+		$bResult = false;
 		if( isset( $_POST['submit'] ) ) {
+			$new_input = array();
 			$aExCategory = empty($_POST['except_category']) ? array() : $_POST['except_category'];
 			//do_action( 'ns_update_category ', $aExCategory );
 			$new_input['except_category'] = $_POST['except_category'];
@@ -176,79 +185,16 @@ class badrSyndicationAdmin extends badrSyndication{
 			$new_input['email'] = sanitize_email( $_POST['syndi_email'] );
 			$new_input['name'] = sanitize_text_field( $_POST['syndi_name'] );
 			$new_input['site_url'] = preg_replace( '/^(http|https):\/\//i', '', get_option( 'siteurl' ));
-			$new_input['post_type'] = !empty($this->aOptions['post_type']) ? $this->aOptions['post_type'] : array('post');
-			$this->updateConfig( $new_input );
-		}		
-?>
-<div class="wrap">
-	<h2>네이버 신디케이션 V2</h2>
-	<div id="updatemessage" class="updated fade" style="display: none;"><p>설정이 업데이트 되었습니다.</p></div>
-	<div class="postbox-container" style="width:60%;">
-		<div class="metabox-holder">
-			<div class="meta-box-sortables">
-				<div id="gasettings" class="postbox">
-           			<div class="handlediv" title="Click to toggle"><br/></div>
-            		<h3 class="hndle"><span>Google Analytics Settings</span></h3>
-					<div class="inside">
-						<form method="post">
-						<table class="form-table">
-							<tbody>
-								<tr>
-								<th scope="row">연동키</th>
-									<td>
-										<input type="text" name="syndi_key" class="large-text" value="<?php echo $this->aOptions['key'] ? $this->aOptions['key'] : ''?>" title="연동키" />
-										<p><a href="http://webmastertool.naver.com/index.naver" target="blank">네이버 웹마스터 도구</a>에서 발급받은 연동키를 입력하세요.</p>
-									</td>
-								</tr>
-								<tr class="even">
-								<th scope="row">관리자</th>
-									<td>
-										<input type="text" name="syndi_name" value="<?php echo $this->aOptions['name'] ? $this->aOptions['name'] : ''?>"  />
-										<p>사이트 관리자나 회사명, 저작권자의 이름을 입력하세요.</p>
-									</td>
-								</tr>
-								<tr>
-								<th scope="row">관리자 이메일</th>
-									<td>
-										<input type="text" name="syndi_email" value="<?php echo $this->aOptions['email'] ? $this->aOptions['email'] : get_option('admin_email', false)?>" />
-									</td>
-								</tr>
-								<tr>
-								<th scope="row">제외할 카테고리</th>
-									<td>
-								    	<div style="border-color:#CEE1EF; border-style:solid; border-width:2px; height:10em; margin:5px 0px 5px 0px; overflow:auto; padding:0.5em 0.5em; background-color:#fff;">
-								    	<ul>
-								    	<?php wp_category_checklist( 0, 0, explode( ',', $this->aOptions['except_category']) );?>
-								    	</ul>
-								   		</div>
-								   		<input type="hidden" value="<?php echo $this->aOptions['except_category']?>" name="except_category" id="except_category" />
-								   	</td>
-							   	</tr>
-						   	</tbody>
-					   	</table>
-
-						
-						<div class="alignright"><input type="submit" class="button-primary" name="submit" value="설정 저장"></div>
-						</form>
-						<br class="clear" />
-					</div>
-				</div>
-			</div>
-		</div>
-		
-		<p class="submit">
-			<input type="submit" name="submit" id="submit" class="button button-primary" value="저장">
-			<a href="<?php echo admin_url('admin-ajax.php')?>?action=adminConfigCheck" class="button" target="configCheck" title="임의의 삭제 엔트리를 생성하여 핑을 보냅니다. 진행하시겠습니까?">동작확인</a>
-			<a href="<?php echo admin_url('admin-ajax.php')?>?action=sendPagePing" class="button" target="sendPages" title="연동설정된 전체포스트를 페이지단위로 핑을 보냅니다. (100Posts/Page)">문서목록 발송</a>
-			<a href="<?php echo admin_url('admin-ajax.php')?>?action=sendResetPing" class="button" target="sendReset" title="현재 네이버에 색인된 전체 목록에 대한 삭제 핑을 보냅니다 . (100Posts/Page)">색인리셋</a>
-		</p>
-	</div>
-</div>		
-<?php
+			$new_input['post_type'] = !empty($this->_aOptions['post_type']) ? $this->_aOptions['post_type'] : array('post');
+			$bResult = $this->updateConfig( $new_input );
+		}
+		$yeti_visited_time = get_option('_syndication_yeti');
+		if( isset($_GET['page']) && $_GET['page'] == $this->plugin_name )
+			require_once(trailingslashit(dirname(__FILE__)) . 'tpl/config.php');
 	}
 	
 	function loadAdminScript(){
-		if ( !isset( $_GET['page'] ) || $_GET['page'] != 'badr-syndication' ) return;
+		if ( !isset( $_GET['page'] ) || $_GET['page'] != $this->plugin_name ) return;
 	 	wp_register_script('badrSyndicationAdminJs', plugins_url( 'js/badr-syndication-admin.js', __FILE__ ), array("jquery","jquery-ui-dialog"));
 		wp_register_style( 'badrSyndicationStylesheet', plugins_url('css/style.css', __FILE__) );
 		wp_enqueue_script('badrSyndicationAdminJs');
@@ -257,34 +203,30 @@ class badrSyndicationAdmin extends badrSyndication{
 		wp_enqueue_script( 'postbox' );
 		wp_enqueue_script( 'dashboard' );
 		//js에서 사용할 플러그인 디렉토리 변수를 naverSyndication.plugin_url에 담는다.
-   		wp_localize_script( 'badrSyndicationAdminJs', 'badrSyndication', array( 'plugin_url' => plugin_dir_url( __FILE__ ) ) );
+   		wp_localize_script( 'badrSyndicationAdminJs', 'badrSyndication', array( 'plugin_url' => plugin_dir_url( __FILE__ ), 'ajax_url' => admin_url('admin-ajax.php') ) );
 	}
 		
-	function procDB($method, $arr){
-		if( !class_exists('naverSyndicationDB') )
-			require_once(trailingslashit(dirname(__FILE__)) . 'badr-syndication-db.php');
-
-		$oDB = &badrSyndicationDB::getInstance();
-
-		call_user_func( array($oDB, $method),  $arr);
-	}
-		
-  function _ping($id) {
+  	function ping($id) {
 		$ping_url = get_option('siteurl').'/?syndication_feeds='.$id;
 		$url = 'https://apis.naver.com/crawl/nsyndi/v2';
 		$arr = array(
 					'method' => 'POST',
 					'headers' => array(
-						"Host" => $this->aOptions['site_url'],
+						"Host" => $this->_aOptions['site_url'],
 						"User-Agent" => "request",
 						"Content-Type" => "application/x-www-form-urlencoded",
-						"Authorization" => "Bearer ".$this->aOptions['key'],
+						"Authorization" => "Bearer ".$this->_aOptions['key'],
 						"Accept-Encoding" => "gzip,deflate,sdch",
 						"Accept-Language" => "en-US,en;q=0.8,ko;q=0.6",
 						"Accept" => "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"	),
 					'body' => array('ping_url' => $ping_url)
 				);
 		$result = wp_remote_post( $url, $arr );
+		ChromePhp::log($ping_url);
 		return $result;
-  }
+  	}
+  	
+  	function activatePlugin() {
+  		
+  	}
 }

@@ -21,7 +21,6 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-
 	if( isset( $_GET['syndication_feeds'] ) ){
 		require_once(trailingslashit(dirname(__FILE__)) . "badr-syndication-front.php");
 		new badrSyndicationFront();
@@ -29,5 +28,6 @@
 	
 	if( is_admin() ){
 		require_once(trailingslashit(dirname(__FILE__)) . "badr-syndication-admin.php");
-		new badrSyndicationAdmin();
+		$badr_syndication_admin = new badrSyndicationAdmin();
+		register_activation_hook( __FILE__ , array( $badr_syndication_admin , 'activatePlugin' ));
 	}

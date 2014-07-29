@@ -45,16 +45,22 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
 == Changelog ==
 
+= 0.7.4 =
+* "동작확인"시 신디케이션서버의 리턴값에 따른 simple_xml에러 처리
+* "리셋"시 기존에 색인된 목록에 대하여 삭제핑을 발송하고 다시 전체목록을 보낸다. sendPagePing메서드 수정할 것
+* "목록발송"시 post_modified컬럼 업데이트
+* post_type 추가
+
 = 0.7.3 =
-미디어버튼 사용불가 - 제외 카테고리 미선택시 js에러 수정
-동작확인시 생성되는 임시문서의 정합성에러 발생하는 경우
+* 미디어버튼 사용불가 - 제외 카테고리 미선택시 js에러 수정
+* 동작확인시 생성되는 임시문서의 정합성에러 발생하는 경우
 
 
 = 0.7.2 =
 * tpl/feeds.php content 노드에 CDATA 태그 제거
 
 = 0.7.1 =
-* badr-loger 플러그인이 설치되지 않았을 경우 ChromePhp::log 에러 제거
+* badr-loger 플러그인이 설치되지 않았을 경우 발생하는 에러 제거
 
 = 0.7 =
 * 기존 문서 목록 발송

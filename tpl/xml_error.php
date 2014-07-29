@@ -1,6 +1,6 @@
 <?php echo('<?xml version="1.0" encoding="utf-8"?>')?>
 <?php
-switch($result->message){
+switch($this->message){
 	case 1:
 		$message = '설정이 유효하지 않습니다.';
 		break;
